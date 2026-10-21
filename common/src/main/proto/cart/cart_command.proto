@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package pb.cart;
+
+option java_multiple_files = true;
+option java_package = "com.sanedge.ecommerce.pb.cart";
+
+import "cart/cart_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message CreateCartRequest {
+    int32 quantity = 1;
+    int32 product_id = 2;
+    int32 user_id = 3;
+}
+
+message DeleteAllCartRequest {
+  int32 user_id = 1;
+  repeated int32 cart_ids = 2;
+}
+
+message DeleteCartRequest {
+  int32 cart_id = 1;
+  int32 user_id = 2;
+}
+
+service CartCommandService {
+    rpc Create(CreateCartRequest) returns(ApiResponseCart);
+    rpc Delete(DeleteCartRequest) returns(ApiResponseCartDelete);
+    rpc DeleteAll(DeleteAllCartRequest) returns(ApiResponseCartAll);
+}

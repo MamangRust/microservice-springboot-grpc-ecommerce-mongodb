@@ -1,0 +1,7 @@
+package com.sanedge.ecommerce.gateway.service;
+
+public interface FolderService {
+    String createFolder(String basePath, String name);
+
+    void deleteFolder(String basePath, String name);
+}

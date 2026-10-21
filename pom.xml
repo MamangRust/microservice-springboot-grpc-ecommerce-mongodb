@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.5.6</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.sanedge</groupId>
+	<artifactId>ecommerce</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>ecommerce</name>
+	<description>Modular gRPC E-Commerce (Spring Boot, Quarkus-style module layout)</description>
+
+	<properties>
+		<java.version>21</java.version>
+		<grpc.version>1.70.0</grpc.version>
+		<protobuf.version>4.29.3</protobuf.version>
+		<protoc-gen.version>3.25.5</protoc-gen.version>
+		<protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
+		<os-maven-plugin.version>1.7.1</os-maven-plugin.version>
+		<springdoc.version>2.2.0</springdoc.version>
+		<java-jwt.version>4.4.0</java-jwt.version>
+		<jakarta-annotation.version>2.1.1</jakarta-annotation.version>
+		<resilience4j.version>2.2.0</resilience4j.version>
+		<mongock.version>5.5.1</mongock.version>
+		<clickhouse-jdbc.version>0.6.5</clickhouse-jdbc.version>
+		<!-- Docker API version yang dipakai docker-java (testcontainers). Daemon modern
+		     menolak client < 1.40, sedangkan default docker-java masih 1.32. -->
+		<docker.api.version>1.40</docker.api.version>
+	</properties>
+
+	<modules>
+		<module>common</module>
+		<module>role</module>
+		<module>user</module>
+		<module>merchant</module>
+		<module>merchant_award</module>
+		<module>merchant_business</module>
+		<module>merchant_detail</module>
+		<module>merchant_policy</module>
+		<module>merchant_social_link</module>
+		<module>category</module>
+		<module>product</module>
+		<module>banner</module>
+		<module>slider</module>
+		<module>cart</module>
+		<module>order</module>
+		<module>order_item</module>
+		<module>review</module>
+		<module>review_detail</module>
+		<module>shipping_address</module>
+		<module>transaction</module>
+		<module>auth</module>
+		<module>gateway</module>
+		<module>email-service</module>
+		<module>stats-reader</module>
+		<module>stats-writer</module>
+		<module>stats-backfill</module>
+		<module>db-migration</module>
+	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.grpc</groupId>
+				<artifactId>grpc-bom</artifactId>
+				<version>${grpc.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.google.protobuf</groupId>
+				<artifactId>protobuf-java</artifactId>
+				<version>${protobuf.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+				<version>${springdoc.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.auth0</groupId>
+				<artifactId>java-jwt</artifactId>
+				<version>${java-jwt.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>jakarta.annotation</groupId>
+				<artifactId>jakarta.annotation-api</artifactId>
+				<version>${jakarta-annotation.version}</version>
+			</dependency>
+			<!-- ClickHouse JDBC driver: used by the stats-* modules (reader/writer/backfill).
+			     Spring Boot does not manage this artifact, so the version is pinned here. -->
+			<dependency>
+				<groupId>com.clickhouse</groupId>
+				<artifactId>clickhouse-jdbc</artifactId>
+				<version>${clickhouse-jdbc.version}</version>
+			</dependency>
+			<!-- resilience4j: dependency-guard (circuit breaker + bulkhead) -->
+			<dependency>
+				<groupId>io.github.resilience4j</groupId>
+				<artifactId>resilience4j-bom</artifactId>
+				<version>${resilience4j.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- internal modules -->
+			<dependency><groupId>com.sanedge</groupId><artifactId>common</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>role</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>user</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>merchant</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>merchant_award</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>merchant_business</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>merchant_detail</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>merchant_policy</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>merchant_social_link</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>category</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>product</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>banner</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>slider</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>cart</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>order</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>order_item</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>review</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>review_detail</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>shipping_address</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>transaction</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>auth</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>email-service</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>stats-reader</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>stats-writer</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>stats-backfill</artifactId><version>${project.version}</version></dependency>
+			<dependency><groupId>com.sanedge</groupId><artifactId>db-migration</artifactId><version>${project.version}</version></dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- docker-java memakai API version 1.32 secara default, sedangkan
+					     daemon Docker modern menolak client < 1.40. -->
+					<systemPropertyVariables>
+						<api.version>${docker.api.version}</api.version>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.xolstice.maven.plugins</groupId>
+					<artifactId>protobuf-maven-plugin</artifactId>
+					<version>${protobuf-maven-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-failsafe-plugin</artifactId>
+					<configuration>
+						<!-- docker-java memakai API version 1.32 secara default, sedangkan
+						     daemon Docker modern menolak client < 1.40. -->
+						<systemPropertyVariables>
+							<api.version>${docker.api.version}</api.version>
+						</systemPropertyVariables>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<annotationProcessorPaths>
+							<path>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok</artifactId>
+								<version>${lombok.version}</version>
+							</path>
+						</annotationProcessorPaths>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+</project>

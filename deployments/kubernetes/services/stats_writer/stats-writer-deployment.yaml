@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stats-writer
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stats-writer
+  template:
+    metadata:
+      labels:
+        app: stats-writer
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: wait-for-mongo
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "[INIT] Waiting for MongoDB to be ready (TCP)..."
+              until nc -z mongo-sales.ecommerce.svc.cluster.local 27017; do
+                echo "MongoDB is not ready yet. Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "[INIT] MongoDB is accessible!"
+        - name: wait-for-kafka
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "[INIT] Waiting for Kafka to be ready (TCP)..."
+              until nc -z kafka.ecommerce.svc.cluster.local 9092; do
+                echo "Kafka is not ready yet. Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "[INIT] Kafka is ready!"
+
+        - name: wait-for-clickhouse
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "[INIT] Waiting for ClickHouse to be ready (TCP)..."
+              until nc -z clickhouse.ecommerce.svc.cluster.local 8123; do
+                echo "ClickHouse is not ready yet. Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "[INIT] ClickHouse is ready!"
+      containers:
+        # stats-writer exposes no health endpoint (it is a Kafka consumer
+        # with no HTTP/gRPC server), so it has no ports and no probes.
+        - name: stats-writer
+          # Spring Boot implementation (mirrors the modular-grpc-restapi build).
+          image: ghcr.io/__GHCR_OWNER__/springboot-ecommerce/stats-writer:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          env:
+            - name: spring.kafka.bootstrap-servers
+              value: "kafka.ecommerce.svc.cluster.local:9092"
+            - name: clickhouse.url
+              value: "jdbc:clickhouse://clickhouse.ecommerce.svc.cluster.local:8123/ecommerce"
+            - name: clickhouse.username
+              value: "dragon"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]

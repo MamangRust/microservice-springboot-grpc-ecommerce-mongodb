@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package pb.slider;
+
+option java_multiple_files = true;
+option java_package = "com.sanedge.ecommerce.pb.slider";
+
+import "slider/slider_common.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+message FindAllSliderRequest {
+    int32 page = 1;
+    int32 page_size = 2;
+    string search = 3;
+}
+
+service SliderQueryService {
+    rpc FindAll(FindAllSliderRequest) returns (ApiResponsePaginationSlider);
+    rpc FindById(FindByIdSliderRequest) returns (ApiResponseSlider);
+    rpc FindByTrashed(FindAllSliderRequest) returns (ApiResponsePaginationSliderDeleteAt);
+    rpc FindByActive(FindAllSliderRequest) returns (ApiResponsePaginationSliderDeleteAt);
+}

@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stats-backfill
+  namespace: ecommerce
+spec:
+  # Manual job: apply it explicitly when historical OLTP rows need to be
+  # materialized into ClickHouse. Re-running is safe — the loader re-inserts
+  # append-only rows, so run once per backfill window.
+  backoffLimit: 3
+  template:
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: wait-for-deps
+          image: busybox:1.35
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "[INIT] Waiting for the source MongoDB (transactions) + ClickHouse..."
+              # The backfill reads aggregated revenue directly from the sales
+              # context MongoDB (transactions collection) and writes to ClickHouse.
+              until nc -z mongo-sales.ecommerce.svc.cluster.local 27017 \
+                && nc -z clickhouse.ecommerce.svc.cluster.local 8123; do
+                echo "Dependencies not ready yet. Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "[INIT] All dependencies are ready!"
+      containers:
+        - name: stats-backfill
+          # Separate Spring Boot module (modular-grpc-restapi build).
+          image: ghcr.io/__GHCR_OWNER__/springboot-ecommerce/stats-backfill:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          env:
+            - name: clickhouse.url
+              value: "jdbc:clickhouse://clickhouse.ecommerce.svc.cluster.local:8123/ecommerce"
+            - name: clickhouse.username
+              value: "dragon"
+            # Source is MongoDB now (sales context, same instance as the domain
+            # services); TRANSACTION_DB_* points at ec_sales.
+            - name: TRANSACTION_DB_HOST
+              value: "mongo-sales.ecommerce.svc.cluster.local"
+            - name: TRANSACTION_DB_PORT
+              value: "27017"
+            - name: TRANSACTION_DB_NAME
+              value: "ec_sales"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+      restartPolicy: OnFailure

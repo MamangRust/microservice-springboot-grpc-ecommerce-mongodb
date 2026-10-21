@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pb.review_detail;
+
+option java_multiple_files = true;
+option java_package = "com.sanedge.ecommerce.pb.review_detail";
+
+import "review_detail/review_detail_common.proto";
+import "review/review_query.proto";
+
+option go_package = "github.com/MamangRust/monolith-ecommerce-shared/pb";
+
+service ReviewDetailQueryService {
+    rpc FindAll(pb.review.FindAllReviewRequest) returns (ApiResponsePaginationReviewDetails);
+    rpc FindById(FindByIdReviewDetailRequest) returns (ApiResponseReviewDetail);
+
+    rpc FindByActive(pb.review.FindAllReviewRequest) returns (ApiResponsePaginationReviewDetailsDeleteAt);
+    rpc FindByTrashed(pb.review.FindAllReviewRequest) returns (ApiResponsePaginationReviewDetailsDeleteAt);
+}
